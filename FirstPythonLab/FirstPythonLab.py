@@ -13,7 +13,7 @@ class Chainsaw:
         self.isWorking = False
 
     def cutWood(self, length):
-        fuelConsumption = length * 0.1  # Розрахунок споживання палива (100 мл на 1 м)
+        fuelConsumption = length * 0.1  
         if self.fuelLevel >= fuelConsumption:
             self.fuelLevel -= fuelConsumption
         else:
