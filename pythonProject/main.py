@@ -1,45 +1,75 @@
-from chainsaw import Chainsaw
-from electric_saw import ElectricSaw
-from saw_manager import SawManager
-from electric_saw import ElectricSaw
-from chainsaw_manager import ChainsawManager
-from electric_saw_manager import ElectricSawManager
+# pylint: disable=missing-final-newline
+# pylint: disable=missing-module-docstring
+# pylint: disable=invalid-name
+# pylint: disable=trailing-newlines
+# pylint: disable=unused-import
+# pylint: disable=ungrouped-imports
+from Exceptions.LoggedDecorator import LoggedDecorator
+from Managers.SM import SM
+from Models.RM import RM
+from Models.chainsaw import Chainsaw
+from Models.electric_saw import ElectricSaw
+from Exceptions import RedundantBatteryException, RedundantFuelException
+
+if __name__ == '__main__':
+    regular_manager = RM()
+    chainsaw1 = Chainsaw("Stihl", 1200, 120, 16, 500)
+    chainsaw2 = Chainsaw("Husqvarna", 1500, 180, 18, 600)
+    electric_saw1 = ElectricSaw("Bosch", 1000, 90, "Brushless", 400, regular_manager)
+    electric_saw2 = ElectricSaw("Makita", 800, 120, "Brushed", 300, regular_manager)
+
+    regular_manager.add_saw(chainsaw1)
+    regular_manager.add_saw(chainsaw2)
+    regular_manager.add_saw(electric_saw1)
+    regular_manager.add_saw(electric_saw2)
+
+    @LoggedDecorator(RedundantBatteryException, "console")
+    def charge_saw(saw):
+        if isinstance(saw, ElectricSaw):
+            if saw.battery_capacity == 100:
+                raise RedundantBatteryException("Battery is already fully charged.")
+            else:
+                saw.battery_capacity += 10
+                print(f"Charged {saw.brand} electric saw. Battery capacity: {saw.battery_capacity}%")
 
 
-chainsaw_manager = ChainsawManager()
-chainsaw_manager.add_saw(Chainsaw("Stihl", 2000, 500, 500, 250))
-chainsaw_manager.add_saw(Chainsaw("Husqvarna", 1800, 400, 400, 150))
-chainsaw_manager.add_saw(Chainsaw("Makita", 2200, 550, 600, 300))
-chainsaw_manager.add_saw(Chainsaw("Echo", 1600, 350, 300, 100))
-chainsaw_manager.add_saw(Chainsaw("Black & Decker", 1200, 250, 200, 50))
+    @LoggedDecorator(RedundantFuelException, "file")
+    def refuel_saw(saw):
+        if isinstance(saw, Chainsaw):
+            if saw.fuel_capacity == 100:
+                raise RedundantFuelException("Fuel tank is already full.")
+            else:
+                saw.fuel_capacity += 10
+                print(f"Refueled {saw.brand} chainsaw. Fuel capacity: {saw.fuel_capacity}%")
 
-electric_saw_manager = ElectricSawManager()
-electric_saw_manager.add_saw(ElectricSaw("Bosch", 2000, 600, "Brushless", 1000))
-electric_saw_manager.add_saw(ElectricSaw("Dewalt", 1800, 550, "Brushless", 800))
-electric_saw_manager.add_saw(ElectricSaw("Makita", 2200, 700, "Brushed", 1200))
-electric_saw_manager.add_saw(ElectricSaw("Ryobi", 1500, 400, "Brushless", 600))
-electric_saw_manager.add_saw(ElectricSaw("Milwaukee", 1700, 500, "Brushed", 900))
+    print("Regular Manager:")
+    for saw in regular_manager:
+        print(saw)
 
-print("All chainsaws:")
-for saw in chainsaw_manager.saw_list:
-    print(saw)
+    print("\nCharging electric saws...")
+    for saw in regular_manager:
+        if isinstance(saw, ElectricSaw):
+            try:
+                charge_saw(saw)
+            except RedundantBatteryException as e:
+                print(f"RedundantBatteryException: {e}")
 
-print("\nAll electric saws:")
-for saw in electric_saw_manager.saw_list:
-    print(saw)
+    print("\nRefueling chainsaws...")
+    for saw in regular_manager:
+        if isinstance(saw, Chainsaw):
+            try:
+                refuel_saw(saw)
+            except RedundantFuelException as e:
+                print(f"RedundantFuelException: {e}")
 
-print("\nChainsaws with power greater than 1800W:")
-for saw in chainsaw_manager.find_all_with_power_greater_than(1800):
-    print(saw)
+    print("\nUpdated Electric Saws:")
+    for saw in regular_manager:
+        if isinstance(saw, ElectricSaw):
+            print(saw)
 
-print("\nElectric saws with remaining work time greater than 5 hours:")
-for saw in electric_saw_manager.find_all_with_remaining_work_time_greater_than(5):
-    print(saw)
+    print("\nUpdated Chainsaws:")
+    for saw in regular_manager:
+        if isinstance(saw, Chainsaw):
+            print(saw)
 
-print("\nChainsaws made by Makita:")
-for saw in chainsaw_manager.find_all_with_brand("Makita"):
-    print(saw)
 
-print("\nElectric saws made by Bosch:")
-for saw in electric_saw_manager.find_all_with_brand("Bosch"):
-    print(saw)
